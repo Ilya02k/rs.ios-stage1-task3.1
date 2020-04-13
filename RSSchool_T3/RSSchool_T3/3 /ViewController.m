@@ -1,5 +1,32 @@
 #import "ViewController.h"
 
+#define LEFT_INDENT 15
+#define TOP_INDENT 75
+#define WIDTH_SCREEN UIScreen.mainScreen.bounds.size.width
+#define HEIGHT_SCREEN UIScreen.mainScreen.bounds.size.height
+#define COEFF_OF_SREEN_WIDTH 0.67
+
+
+
+@interface ViewController ()
+
+@property (nonatomic, strong) UILabel *labelResultColor;
+@property (nonatomic, strong) UILabel *labelRed;
+@property (nonatomic, strong) UILabel *labelGreen;
+@property (nonatomic, strong) UILabel *labelBlue;
+
+@property (nonatomic, strong) UITextField *textFieldRed;
+@property (nonatomic, strong) UITextField *textFieldGreen;
+@property (nonatomic, strong) UITextField *textFieldBlue;
+
+@property (nonatomic, strong) UIButton *buttonProcess;
+
+@property (nonatomic, strong) UIView *viewResultColor;
+
+
+@end
+
+
 @implementation ViewController
 
 #pragma mark -
@@ -7,155 +34,159 @@
 - (void)viewDidLoad {
     [super viewDidLoad];
     
-    self.colorView = [[UIView alloc] init];
-    self.resLabel = [[UILabel alloc] init];
-    self.rLabel = [[UILabel alloc] init];
-    self.gLabel = [[UILabel alloc] init];
-    self.bLabel = [[UILabel alloc] init];
-    self.rField = [[UITextField alloc] init];
-    self.gField = [[UITextField alloc] init];
-    self.bField = [[UITextField alloc] init];
-    self.button = [[UIButton alloc] init];
+    
+    [self setupLabels];
+    [self setupResultView];
+    [self setupTextFields];
+    [self setupButton];
+    [self subscribeAccessibilityIdentifier];
+}
 
+- (void)setupButton {
+    self.buttonProcess = [UIButton buttonWithType:UIButtonTypeSystem];
+    self.buttonProcess.frame = CGRectMake(WIDTH_SCREEN/2-60, HEIGHT_SCREEN/2, 120, 35);
+    [self.buttonProcess setTitle:@"Process" forState:UIControlStateNormal];
+    self.buttonProcess.titleLabel.textColor = UIColor.blueColor;
+    [self.buttonProcess addTarget:self action:@selector(pressButton) forControlEvents:UIControlEventTouchUpInside];
+    [self.view addSubview: self.buttonProcess];
+}
+
+- (void)setupResultView {
+    self.viewResultColor = [[UIView alloc] initWithFrame:CGRectMake(110,
+                                                                    TOP_INDENT-10,
+                                                                    WIDTH_SCREEN*0.60-25,
+                                                                    45)];
+    self.viewResultColor.backgroundColor = UIColor.grayColor;
+    [self.view addSubview:self.viewResultColor];
+}
+
+- (void)setupTextFields {
+    self.textFieldRed = [[UITextField alloc] initWithFrame:CGRectMake(85,
+                                                                      2*TOP_INDENT,
+                                                                      WIDTH_SCREEN*0.60,
+                                                                      35)];
+    self.textFieldRed.borderStyle = UITextBorderStyleRoundedRect;
+    self.textFieldRed.placeholder = @"0..255";
+    
+    self.textFieldGreen = [[UITextField alloc] initWithFrame:CGRectMake(85,
+                                                                        3*TOP_INDENT,
+                                                                        WIDTH_SCREEN*0.60,
+                                                                        35)];
+    self.textFieldGreen.borderStyle = UITextBorderStyleRoundedRect;
+    self.textFieldGreen.placeholder = @"0..255";
+    
+    self.textFieldBlue = [[UITextField alloc] initWithFrame:CGRectMake(85,
+                                                                       4*TOP_INDENT,
+                                                                       WIDTH_SCREEN*0.60,
+                                                                       35)];
+    self.textFieldBlue.borderStyle = UITextBorderStyleRoundedRect;
+    self.textFieldBlue.placeholder = @"0..255";
+    
+    [self.textFieldRed addTarget:self action:@selector(handleOpenField:) forControlEvents:UIControlEventAllTouchEvents];
+    [self.textFieldGreen addTarget:self action:@selector(handleOpenField:) forControlEvents:UIControlEventAllTouchEvents];
+    [self.textFieldBlue addTarget:self action:@selector(handleOpenField:) forControlEvents:UIControlEventAllTouchEvents];
+    
+    
+    [self.view addSubview:self.textFieldRed];
+    [self.view addSubview:self.textFieldGreen];
+    [self.view addSubview:self.textFieldBlue];
+}
+
+- (void)setupLabels {
+
+    self.labelResultColor = [[UILabel alloc] initWithFrame:CGRectMake(LEFT_INDENT,
+                                                                      TOP_INDENT-10,
+                                                                      70,
+                                                                      45)];
+
+    self.labelRed = [[UILabel alloc] initWithFrame:CGRectMake(LEFT_INDENT,
+                                                              2*TOP_INDENT,
+                                                              70,
+                                                              35)];
+
+    self.labelGreen = [[UILabel alloc] initWithFrame:CGRectMake(LEFT_INDENT,
+                                                                3*TOP_INDENT,
+                                                                70,
+                                                                35)];
+
+    self.labelBlue = [[UILabel alloc] initWithFrame:CGRectMake(LEFT_INDENT,
+                                                               4*TOP_INDENT,
+                                                               70,
+                                                               35)];
+    self.labelResultColor.text = @"Color";
+    self.labelRed.text = @"RED";
+    self.labelGreen.text = @"GREEN";
+    self.labelBlue.text = @"BLUE";
+    
+    [self.view addSubview:self.labelResultColor];
+    [self.view addSubview:self.labelRed];
+    [self.view addSubview:self.labelGreen];
+    [self.view addSubview:self.labelBlue];
+}
+
+- (void)pressButton {
+    if (([self.textFieldRed.text isEqualToString:@""] || [self.textFieldGreen.text isEqualToString:@""] || [self.textFieldBlue.text isEqualToString:@""]) || ([self.textFieldRed.text integerValue] < 0 || [self.textFieldRed.text integerValue] > 255) || ([self.textFieldGreen.text integerValue] < 0 || [self.textFieldGreen.text integerValue] > 255) || ([self.textFieldBlue.text integerValue] < 0 || [self.textFieldBlue.text integerValue] > 255) || [self stringIsNumeric:self.textFieldRed.text] == false || [self stringIsNumeric:self.textFieldGreen.text] == false || [self stringIsNumeric:self.textFieldBlue.text] == false) {
+        
+        
+        
+        self.labelResultColor.text = @"Error";
+    } else {
+        UIColor *color = [UIColor colorWithRed:[self.textFieldRed.text doubleValue]/255
+                                         green:[self.textFieldGreen.text doubleValue]/255
+                                         blue: [self.textFieldBlue.text doubleValue]/255
+                                         alpha:1.0];
+        self.viewResultColor.backgroundColor = color;
+        self.labelResultColor.text = [self hexStringFromColor:color];
+        
+    }
+    self.textFieldRed.text = @"";
+    self.textFieldGreen.text = @"";
+    self.textFieldBlue.text = @"";
+    
+}
+
+- (void)handleOpenField:(UITextField *)field {
+    self.labelResultColor.text = @"Color";
+}
+
+
+- (NSString *)hexStringFromColor:(UIColor *)color {
+    const CGFloat *components = CGColorGetComponents(color.CGColor);
+
+    CGFloat r = components[0];
+    CGFloat g = components[1];
+    CGFloat b = components[2];
+
+    return [NSString stringWithFormat:@"0x%02X%02X%02X",
+            (int)(r * 255),
+            (int)(g * 255),
+            (int)(b * 255)];
+}
+
+-(BOOL) stringIsNumeric:(NSString *) str {
+    NSNumberFormatter *formatter = [[NSNumberFormatter alloc] init];
+    NSNumber *number = [formatter numberFromString:str];
+    [formatter release];
+    return !!number;
+}
+
+
+- (void)subscribeAccessibilityIdentifier {
+    
     self.view.accessibilityIdentifier = @"mainView";
     
-    self.rLabel.text = @"RED";
-    self.rLabel.accessibilityIdentifier = @"labelRed";
-  
-    self.rField.placeholder = @"0..255";
-    self.rField.accessibilityIdentifier = @"textFieldRed";
-    self.rField.borderStyle = UITextBorderStyleRoundedRect;
-    [self.rField addTarget:self action:@selector(textFieldBeginEditing:) forControlEvents:UIControlEventEditingDidBegin];
-    [self.view addSubview:self.rField];
-
-    self.gLabel.text = @"GREEN";
-    self.gLabel.accessibilityIdentifier = @"labelGreen";
+    self.textFieldRed.accessibilityIdentifier = @"textFieldRed";
+    self.textFieldGreen.accessibilityIdentifier = @"textFieldGreen";
+    self.textFieldBlue.accessibilityIdentifier = @"textFieldBlue";
     
-    self.gField.accessibilityIdentifier = @"textFieldGreen";
-    self.gField.placeholder = @"0..255";
-    self.gField.borderStyle = UITextBorderStyleRoundedRect;
-    [self.gField addTarget:self action:@selector(textFieldBeginEditing:) forControlEvents:UIControlEventEditingDidBegin];
-    [self.view addSubview:self.gField];
+    self.buttonProcess.accessibilityIdentifier = @"buttonProcess";
     
-    self.bLabel.text = @"BLUE";
-    self.bLabel.accessibilityIdentifier = @"labelBlue";
+    self.labelRed.accessibilityIdentifier = @"labelRed";
+    self.labelGreen.accessibilityIdentifier = @"labelGreen";
+    self.labelBlue.accessibilityIdentifier = @"labelBlue";
+    self.labelResultColor.accessibilityIdentifier = @"labelResultColor";
     
-    self.bField.placeholder = @"0..255";
-    self.bField.accessibilityIdentifier = @"textFieldBlue";
-    self.bField.borderStyle = UITextBorderStyleRoundedRect;
-    [self.bField addTarget:self action:@selector(textFieldBeginEditing:) forControlEvents:UIControlEventEditingDidBegin];
-    [self.view addSubview:self.bField];
-    
-    [self.button setTitle:@"Process" forState: UIControlStateNormal];
-    [self.button setTitleColor:UIColor.blueColor forState:UIControlStateNormal];
-    [self.button addTarget:self action:@selector(buttonTapped:) forControlEvents:UIControlEventTouchUpInside];
-    self.button.accessibilityIdentifier = @"buttonProcess";
-    
-    self.resLabel.text = [NSString stringWithFormat:@"Color"];
-    self.resLabel.accessibilityIdentifier = @"labelResultColor";
-    
-    self.colorView.translatesAutoresizingMaskIntoConstraints = NO;
-    self.resLabel.translatesAutoresizingMaskIntoConstraints = NO;
-    self.rLabel.translatesAutoresizingMaskIntoConstraints = NO;
-    self.gLabel.translatesAutoresizingMaskIntoConstraints = NO;
-    self.bLabel.translatesAutoresizingMaskIntoConstraints = NO;
-    self.rField.translatesAutoresizingMaskIntoConstraints = NO;
-    self.gField.translatesAutoresizingMaskIntoConstraints = NO;
-    self.bField.translatesAutoresizingMaskIntoConstraints = NO;
-    self.button.translatesAutoresizingMaskIntoConstraints = NO;
-    
-    [self.view addSubview:self.colorView];
-    [self.view addSubview:self.resLabel];
-    [self.view addSubview:self.rLabel];
-    [self.view addSubview:self.gLabel];
-    [self.view addSubview:self.bLabel];
-    [self.view addSubview:self.rField];
-    [self.view addSubview:self.gField];
-    [self.view addSubview:self.bField];
-    [self.view addSubview:self.button];
-    
-    self.colorView.backgroundColor = [UIColor clearColor];
-    self.colorView.accessibilityIdentifier = @"viewResultColor";
-    [self.colorView.topAnchor constraintEqualToAnchor:self.view.safeAreaLayoutGuide.topAnchor constant:0].active = YES;
-    [self.colorView.leadingAnchor constraintEqualToAnchor:_resLabel.trailingAnchor constant:0].active = YES;
-    [self.colorView.trailingAnchor constraintEqualToAnchor:self.view.safeAreaLayoutGuide.trailingAnchor constant:-36].active = YES;
-    [self.colorView.heightAnchor constraintEqualToConstant:40].active = YES;
-    
-    
-    [self.resLabel.topAnchor constraintEqualToAnchor:self.view.safeAreaLayoutGuide.topAnchor constant:5].active = YES;
-    [self.resLabel.leadingAnchor constraintEqualToAnchor:self.view.safeAreaLayoutGuide.leadingAnchor constant:18].active = YES;
-    [self.resLabel.widthAnchor constraintEqualToAnchor:self.view.safeAreaLayoutGuide.widthAnchor multiplier:0.25].active = YES;
-    [self.resLabel.heightAnchor constraintEqualToConstant:30].active = YES;
-    
-    [self.rLabel.topAnchor constraintEqualToAnchor:self.colorView.bottomAnchor constant:30].active = YES;
-    [self.rLabel.leadingAnchor constraintEqualToAnchor:self.view.safeAreaLayoutGuide.leadingAnchor constant:18].active = YES;
-    [self.rLabel.widthAnchor constraintEqualToAnchor:self.view.safeAreaLayoutGuide.widthAnchor multiplier:0.15].active = YES;
-    [self.rLabel.heightAnchor constraintEqualToConstant:30].active = YES;
-    
-    [self.rField.topAnchor constraintEqualToAnchor:self.colorView.bottomAnchor constant:30].active = YES;
-    [self.rField.trailingAnchor constraintEqualToAnchor:self.view.safeAreaLayoutGuide.trailingAnchor constant:-36].active = YES;
-    [self.rField.leadingAnchor constraintEqualToAnchor:self.rLabel.trailingAnchor].active = YES;
-    [self.rField.heightAnchor constraintEqualToConstant:30].active = YES;
-    
-    [self.gLabel.topAnchor constraintEqualToAnchor:self.rLabel.bottomAnchor constant:30].active = YES;
-    [self.gLabel.leadingAnchor constraintEqualToAnchor:self.view.safeAreaLayoutGuide.leadingAnchor constant:18].active = YES;
-    [self.gLabel.widthAnchor constraintEqualToAnchor:self.view.safeAreaLayoutGuide.widthAnchor multiplier:0.15].active = YES;
-    [self.gLabel.heightAnchor constraintEqualToConstant:30].active = YES;
-    
-    [self.gField.topAnchor constraintEqualToAnchor:self.rField.bottomAnchor constant:30].active = YES;
-    [self.gField.trailingAnchor constraintEqualToAnchor:self.view.safeAreaLayoutGuide.trailingAnchor constant:-36].active = YES;
-    [self.gField.leadingAnchor constraintEqualToAnchor:self.gLabel.trailingAnchor].active = YES;
-    [self.gField.heightAnchor constraintEqualToConstant:30].active = YES;
-    
-    [self.bLabel.topAnchor constraintEqualToAnchor:self.gLabel.bottomAnchor constant:30].active = YES;
-    [self.bLabel.leadingAnchor constraintEqualToAnchor:self.view.safeAreaLayoutGuide.leadingAnchor constant:18].active = YES;
-    [self.bLabel.widthAnchor constraintEqualToAnchor:self.view.safeAreaLayoutGuide.widthAnchor multiplier:0.15].active = YES;
-    [self.bLabel.heightAnchor constraintEqualToConstant:30].active = YES;
-    
-    [self.bField.topAnchor constraintEqualToAnchor:self.gField.bottomAnchor constant:30].active = YES;
-    [self.bField.trailingAnchor constraintEqualToAnchor:self.view.safeAreaLayoutGuide.trailingAnchor constant:-36].active = YES;
-    [self.bField.leadingAnchor constraintEqualToAnchor:self.bLabel.trailingAnchor].active = YES;
-    [self.bField.heightAnchor constraintEqualToConstant:30].active = YES;
-    
-    [self.button.topAnchor constraintEqualToAnchor:self.bField.bottomAnchor constant:30].active = YES;
-    [self.button.trailingAnchor constraintEqualToAnchor:self.view.safeAreaLayoutGuide.trailingAnchor constant:0].active = YES;
-    [self.button.leadingAnchor constraintEqualToAnchor:self.view.safeAreaLayoutGuide.leadingAnchor].active = YES;
-    [self.button.heightAnchor constraintEqualToConstant:30].active = YES;
-    
-}
-
-- (void)buttonTapped:(UIButton *)sender {
-    int red = self.rField.text.intValue;
-    int green = self.gField.text.intValue;
-    int blue = self.bField.text.intValue;
-    
-    NSCharacterSet *notDecimalDigitSet = [[NSCharacterSet decimalDigitCharacterSet] invertedSet];
-    
-    if (self.bField.text.length != 0 && self.rField.text.length != 0 && self.gField.text.length != 0 && [self.rField.text rangeOfCharacterFromSet:notDecimalDigitSet].location == NSNotFound && [self.gField.text rangeOfCharacterFromSet:notDecimalDigitSet].location == NSNotFound && [self.bField.text rangeOfCharacterFromSet:notDecimalDigitSet].location == NSNotFound) {
-           
-           if (red >= 0 && red <256 && green >= 0 && green < 256 && blue >= 0 && blue < 256) {
-               self.colorView.backgroundColor = [UIColor colorWithRed:((float)red/255) green:((float)green/255) blue:  ((float)blue/255) alpha:1];
-               NSString *hex = [[NSString alloc] initWithFormat:@"0x%02X%02X%02X", red, green, blue];
-               self.resLabel.text = hex;
-           } else {
-               self.resLabel.text = @"Error";
-               self.colorView.backgroundColor = [UIColor clearColor];
-           }
-       }  else {
-           self.resLabel.text = @"Error";
-           self.colorView.backgroundColor = [UIColor clearColor];
-       }
-       [self.view endEditing:YES];
-       self.rField.text = @"";
-       self.gField.text = @"";
-       self.bField.text = @"";
-}
-
-- (void)textFieldBeginEditing:(UIButton *)sender {
-    if (![self.resLabel.text isEqualToString:@"Color"]) {
-         self.resLabel.text = @"Color";
-         self.colorView.backgroundColor = [UIColor clearColor];
-    }
+    self.viewResultColor.accessibilityIdentifier = @"viewResultColor";
 }
 
 @end
